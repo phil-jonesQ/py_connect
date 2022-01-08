@@ -267,7 +267,7 @@ screen = pygame.display.set_mode(size)
 draw_board(board)
 pygame.display.update()
 
-myfont = pygame.font.SysFont("monospace", 75)
+myfont = pygame.font.SysFont("monospace", 55)
 
 while run:
     for event in pygame.event.get():
@@ -333,7 +333,7 @@ while run:
                     drop_piece(board, row, col, 1)
 
                     if winning_move(board, PLAYER_PIECE):
-                        label = myfont.render("Player 1 wins!!", 1, RED)
+                        label = myfont.render("P1 wins on level " + str(ai_depth), 1, RED)
                         screen.blit(label, (40,10))
                         game_over = True
                     
@@ -354,7 +354,7 @@ while run:
             drop_piece(board, row, col, 2)
 
             if winning_move(board, AI_PIECE):
-                label = myfont.render("Player 2 wins!!", 1, YELLOW)
+                label = myfont.render("AI wins on level " + str(ai_depth), 1, YELLOW)
                 screen.blit(label, (40,10))
                 game_over = True
 
