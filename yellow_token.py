@@ -16,9 +16,20 @@ class YellowToken(pygame.sprite.Sprite):
 
     def update(self):
         self.rect.y += self.speed
-        self.constrain()
-        
+
+    def freeze(self, x, y):
+        self.rect.x = x
+        self.rect.y = y
+
     def constrain(self):
         if self.rect.y > self.max_height:
             self.rect.y = self.max_height
+            return (self.rect.x, self.rect.y)
+            
+    def collide(self, sprite, sprites):
+        if pygame.sprite.spritecollide(sprite, sprites, False):
+            print("Yellow Collide with red")
+            sprite.rect.y = sprite.rect.y - 10 # Freeze piece
+            return (sprite.rect.x, sprite.rect.y)
+
 
