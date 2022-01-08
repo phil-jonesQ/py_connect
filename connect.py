@@ -29,6 +29,7 @@ Modified - Phil Jones January 2021
 * Add animate piece drop function - so it simulates the piece dropping down the board
 * Add empty board animation - so it simulates all the pieces being emptied
 * Implement minmax AI - again, from Keith Galli (see license above)
+* Add level selection mechanism (sets the depth for the minmax)
 """
 
 import numpy as np
@@ -241,11 +242,15 @@ def draw_board(board):
                 pygame.draw.circle(screen, YELLOW, (int(c*SQUARESIZE+SQUARESIZE/2), height-int(r*SQUARESIZE+SQUARESIZE/2)), RADIUS)
     pygame.display.update()
 
+def clear_hud():
+    pygame.draw.rect(screen, BLACK, (0,0, width, SQUARESIZE))
 
 board = create_board()
 game_over = False
 run = True
 turn = random.randint(PLAYER, AI)
+select_level = True
+ai_depth = 1
 
 pygame.init()
 
@@ -271,17 +276,43 @@ while run:
             sys.exit()
 
         keys = pygame.key.get_pressed()
+        if select_level:
+            label = myfont.render("SET LEVEL (1-5)", 1, RED)
+            screen.blit(label, (40,10))
+            if keys[pygame.K_1]:
+                ai_depth = 1
+                select_level = False
+                clear_hud()
+            if keys[pygame.K_2]:
+                ai_depth = 2
+                select_level = False
+                clear_hud()
+            if keys[pygame.K_3]:
+                ai_depth = 3
+                select_level = False
+                clear_hud()
+            if keys[pygame.K_4]:
+                ai_depth = 4
+                select_level = False
+                clear_hud()
+            if keys[pygame.K_5]:
+                ai_depth = 5
+                select_level = False
+                clear_hud()
+              
+
         if keys[pygame.K_SPACE] and game_over or keys[pygame.K_r]:
             # Reset Game
             game_over = False
             turn = random.randint(PLAYER, AI)
             piece = 0
-            pygame.draw.rect(screen, BLACK, (0,0, width, SQUARESIZE))
+            select_level = True
+            clear_hud()
             empty_board()
             pygame.display.update()
 
-        if event.type == pygame.MOUSEMOTION and not game_over:
-            pygame.draw.rect(screen, BLACK, (0,0, width, SQUARESIZE))
+        if event.type == pygame.MOUSEMOTION and not game_over and not select_level:
+            clear_hud()
             posx = event.pos[0]
             if turn == 0:
                 pygame.draw.circle(screen, RED, (posx, int(SQUARESIZE/2)), RADIUS)
@@ -289,8 +320,8 @@ while run:
                 pygame.draw.circle(screen, YELLOW, (posx, int(SQUARESIZE/2)), RADIUS)
         pygame.display.update()
 
-        if event.type == pygame.MOUSEBUTTONDOWN and not game_over:
-            pygame.draw.rect(screen, BLACK, (0,0, width, SQUARESIZE))
+        if event.type == pygame.MOUSEBUTTONDOWN and not game_over and not select_level:
+            clear_hud()
             #print(event.pos)
             # Ask for Player 1 Input
             if turn == PLAYER:
@@ -314,8 +345,8 @@ while run:
 
 
         # # Ask for Player 2 Input
-    if turn == AI and not game_over:				
-        col, minimax_score = minimax(board, 3, -math.inf, math.inf, True)
+    if turn == AI and not game_over and not select_level:				
+        col, minimax_score = minimax(board, ai_depth, -math.inf, math.inf, True)
     
         if is_valid_location(board, col):
             row = get_next_open_row(board, col)
