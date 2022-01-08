@@ -41,6 +41,7 @@ import random
 BLUE = (0,0,255)
 BLACK = (0,0,0)
 RED = (255,0,0)
+GREEN = (0,255,0)
 YELLOW = (255,255,0)
 
 ROW_COUNT = 6
@@ -245,6 +246,10 @@ def draw_board(board):
 def clear_hud():
     pygame.draw.rect(screen, BLACK, (0,0, width, SQUARESIZE))
 
+def write_to_hud(message, colour, x, y):
+        label = myfont.render(message, 1, colour)
+        screen.blit(label, (x, y))
+
 board = create_board()
 game_over = False
 run = True
@@ -277,8 +282,7 @@ while run:
 
         keys = pygame.key.get_pressed()
         if select_level:
-            label = myfont.render("SET LEVEL (1-5)", 1, RED)
-            screen.blit(label, (40,10))
+            write_to_hud("SET LEVEL (1-5)", RED, 40, 10)
             if keys[pygame.K_1]:
                 ai_depth = 1
                 select_level = False
@@ -333,8 +337,7 @@ while run:
                     drop_piece(board, row, col, 1)
 
                     if winning_move(board, PLAYER_PIECE):
-                        label = myfont.render("P1 wins on level " + str(ai_depth), 1, RED)
-                        screen.blit(label, (40,10))
+                        write_to_hud("P1 wins on level " + str(ai_depth), RED, 40, 10)
                         game_over = True
                     
                     #print_board(board)
@@ -354,8 +357,7 @@ while run:
             drop_piece(board, row, col, 2)
 
             if winning_move(board, AI_PIECE):
-                label = myfont.render("AI wins on level " + str(ai_depth), 1, YELLOW)
-                screen.blit(label, (40,10))
+                write_to_hud("AI wins on level " + str(ai_depth), YELLOW, 40, 10)
                 game_over = True
 
             #print_board(board)
