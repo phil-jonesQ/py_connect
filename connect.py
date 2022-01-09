@@ -30,6 +30,7 @@ Modified - Phil Jones January 2021
 * Add empty board animation - so it simulates all the pieces being emptied
 * Implement minimax AI - again, from Keith Galli (see license above)
 * Add level selection mechanism (sets the depth for the minimax)
+* Add a Player Amount Selection i.e. allow two player mode to work again
 """
 
 import numpy as np
@@ -49,12 +50,16 @@ COLUMN_COUNT = 7
 
 PLAYER = 0
 AI = 1
+PLAYER2 = 1
 
 EMPTY = 0
 PLAYER_PIECE = 1
+PLAYER2_PIECE = 2
 AI_PIECE = 2
 
 WINDOW_LENGTH = 4
+HUD_POS = (5, 10)
+HUD_POS_LARGE = (40, 10)
 
 def create_board():
     board = np.zeros((ROW_COUNT,COLUMN_COUNT))
@@ -245,16 +250,23 @@ def draw_board(board):
 
 def clear_hud():
     pygame.draw.rect(screen, BLACK, (0,0, width, SQUARESIZE))
+    #pygame.display.update()
 
-def write_to_hud(message, colour, x, y):
-        label = myfont.render(message, 1, colour)
-        screen.blit(label, (x, y))
+def write_to_hud(message, colour, pos, size):
+        if size == "small":
+            label = myfont_small.render(message, 1, colour)
+        else:
+            label = myfont.render(message, 1, colour)
+        screen.blit(label, pos)
+        pygame.display.update()
 
 board = create_board()
 game_over = False
 run = True
-turn = random.randint(PLAYER, AI)
+turn = PLAYER
 select_level = True
+select_players = True
+two_players = False
 ai_depth = 1
 
 pygame.init()
@@ -273,6 +285,7 @@ draw_board(board)
 pygame.display.update()
 
 myfont = pygame.font.SysFont("monospace", 55)
+myfont_small = pygame.font.SysFont("monospace", 25)
 
 while run:
     for event in pygame.event.get():
@@ -281,63 +294,93 @@ while run:
             sys.exit()
 
         keys = pygame.key.get_pressed()
-        if select_level:
-            write_to_hud("SET LEVEL (1-5)", RED, 40, 10)
+        if select_players:
+            write_to_hud("SELECT PLAYERS (1) or (2)", RED, HUD_POS, "small")
             if keys[pygame.K_1]:
+                select_players = False
+                turn = random.randint(PLAYER, AI)
+                clear_hud()
+            if keys[pygame.K_2]:
+                two_players = True
+                select_players = False
+                select_level = False
+                turn = PLAYER
+                clear_hud()
+                pygame.display.update()
+        if select_level and not select_players and not two_players:
+            write_to_hud("SET AI LEVEL (E)asy (M)edium (H)ard (B)oss", RED, HUD_POS, "small")
+            if keys[pygame.K_e]:
                 ai_depth = 1
                 select_level = False
                 clear_hud()
-            if keys[pygame.K_2]:
+            if keys[pygame.K_m]:
                 ai_depth = 2
                 select_level = False
                 clear_hud()
-            if keys[pygame.K_3]:
+            if keys[pygame.K_h]:
                 ai_depth = 3
                 select_level = False
                 clear_hud()
-            if keys[pygame.K_4]:
+            if keys[pygame.K_b]:
                 ai_depth = 4
                 select_level = False
                 clear_hud()
-            if keys[pygame.K_5]:
-                ai_depth = 5
-                select_level = False
-                clear_hud()
-              
 
         if keys[pygame.K_SPACE] and game_over or keys[pygame.K_r]:
             # Reset Game
             game_over = False
-            turn = random.randint(PLAYER, AI)
             piece = 0
             select_level = True
+            select_players = True
+            two_players = False
             clear_hud()
             empty_board()
             pygame.display.update()
 
-        if event.type == pygame.MOUSEMOTION and not game_over and not select_level:
-            clear_hud()
-            posx = event.pos[0]
-            if turn == 0:
-                pygame.draw.circle(screen, RED, (posx, int(SQUARESIZE/2)), RADIUS)
-            else: 
-                pygame.draw.circle(screen, YELLOW, (posx, int(SQUARESIZE/2)), RADIUS)
-        pygame.display.update()
+        if not select_level and not select_players:
+            if event.type == pygame.MOUSEMOTION and not game_over:
+                clear_hud()
+                posx = event.pos[0]
+                if turn == PLAYER:
+                    pygame.draw.circle(screen, RED, (posx, int(SQUARESIZE/2)), RADIUS)
+                else: 
+                    pygame.draw.circle(screen, YELLOW, (posx, int(SQUARESIZE/2)), RADIUS)
+                pygame.display.update()
 
-        if event.type == pygame.MOUSEBUTTONDOWN and not game_over and not select_level:
+        if event.type == pygame.MOUSEBUTTONDOWN and not game_over and not select_level and not select_players:
             clear_hud()
-            #print(event.pos)
             # Ask for Player 1 Input
             if turn == PLAYER:
                 posx = event.pos[0]
                 col = int(math.floor(posx/SQUARESIZE))
                 if is_valid_location(board, col):
                     row = get_next_open_row(board, col)
-                    animate_piece(board, row, col, 1)
-                    drop_piece(board, row, col, 1)
+                    animate_piece(board, row, col, PLAYER_PIECE)
+                    drop_piece(board, row, col, PLAYER_PIECE)
 
                     if winning_move(board, PLAYER_PIECE):
-                        write_to_hud("P1 wins on level " + str(ai_depth), RED, 40, 10)
+                        if two_players:
+                            write_to_hud("P1 wins!!", RED, HUD_POS_LARGE, "large")
+                        else:
+                            write_to_hud("P1 wins on level " + str(ai_depth), RED, HUD_POS_LARGE, "large")
+                        game_over = True
+                    
+                    turn += 1
+                    turn = turn % 2
+                    draw_board(board)
+            else: # Else it will Player 2's input
+                posx = event.pos[0]
+                col = int(math.floor(posx/SQUARESIZE))
+                if is_valid_location(board, col):
+                    row = get_next_open_row(board, col)
+                    animate_piece(board, row, col, PLAYER2_PIECE)
+                    drop_piece(board, row, col, PLAYER2_PIECE)
+
+                    if winning_move(board, PLAYER2_PIECE):
+                        if two_players:
+                            write_to_hud("P2 wins!!", YELLOW, HUD_POS_LARGE, "large")
+                        else:
+                            write_to_hud("P2 wins on level " + str(ai_depth), YELLOW, HUD_POS_LARGE, "large")
                         game_over = True
                     
                     #print_board(board)
@@ -347,20 +390,21 @@ while run:
 
 
 
-        # # Ask for Player 2 Input
-    if turn == AI and not game_over and not select_level:				
-        col, minimax_score = minimax(board, ai_depth, -math.inf, math.inf, True)
-    
-        if is_valid_location(board, col):
-            row = get_next_open_row(board, col)
-            animate_piece(board, row, col, 2)
-            drop_piece(board, row, col, 2)
+    # Run If AI IS PLAYING
+    if two_players == False:
+        if turn == AI and not game_over and not select_level:			
+            col, minimax_score = minimax(board, ai_depth, -math.inf, math.inf, True)
+        
+            if is_valid_location(board, col):
+                row = get_next_open_row(board, col)
+                animate_piece(board, row, col, 2)
+                drop_piece(board, row, col, 2)
 
-            if winning_move(board, AI_PIECE):
-                write_to_hud("AI wins on level " + str(ai_depth), YELLOW, 40, 10)
-                game_over = True
+                if winning_move(board, AI_PIECE):
+                    write_to_hud("AI wins on level " + str(ai_depth), YELLOW, HUD_POS_LARGE, "large")
+                    game_over = True
 
-            #print_board(board)
-            turn += 1
-            turn = turn % 2
-            draw_board(board)
+                #print_board(board)
+                turn += 1
+                turn = turn % 2
+                draw_board(board)
