@@ -28,8 +28,8 @@ Modified - Phil Jones January 2021
 * Change End of Game mechanic to allow a reset with the SPACE BAR
 * Add animate piece drop function - so it simulates the piece dropping down the board
 * Add empty board animation - so it simulates all the pieces being emptied
-* Implement minmax AI - again, from Keith Galli (see license above)
-* Add level selection mechanism (sets the depth for the minmax)
+* Implement minimax AI - again, from Keith Galli (see license above)
+* Add level selection mechanism (sets the depth for the minimax)
 """
 
 import numpy as np
